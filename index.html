@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For You 💌</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: #ffe4ec;
+    font-family: 'Caveat', cursive;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .hint { font-size: 1.6rem; color: #c2185b; margin-bottom: 20px; }
+
+  #envelope {
+    font-size: 8rem;
+    cursor: pointer;
+    animation: beat 1.2s infinite;
+    user-select: none;
+  }
+  @keyframes beat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+
+  #letter {
+    display: none;
+    width: 88%;
+    max-width: 420px;
+    background: #fffaf3;
+    border-radius: 16px;
+    padding: 28px 22px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
+    font-size: 1.7rem;
+    line-height: 1.4;
+    color: #5a2a3a;
+    text-align: left;
+    animation: slideUp 0.8s ease;
+  }
+  #letter img {
+    width: 100%;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  #resetBtn {
+    display: none;
+    margin: 18px auto 0;
+    padding: 8px 18px;
+    font-family: 'Caveat', cursive;
+    font-size: 1.4rem;
+    color: #fff;
+    background: #e91e63;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .heart {
+    position: fixed;
+    bottom: -40px;
+    font-size: 1.8rem;
+    animation: floatUp 4s linear forwards;
+    pointer-events: none;
+  }
+  @keyframes floatUp {
+    to { transform: translateY(-110vh); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+  <p class="hint" id="hint">Tap the envelope 💌</p>
+  <div id="envelope">💌</div>
+
+  <div id="letter">
+    <img src="photo.jpg" alt="Us" onerror="this.style.display='none'">
+    <p id="text"></p>
+    <button id="resetBtn">Read again 🔄</button>
+  </div>
+
+  <audio id="song" src="song.mp3" loop></audio>
+
+<script>
+  // ✏️ WRITE YOUR LETTER HERE
+  const message =
+`My Dear Abu k,
+
+I made this little page just for you,
+because I wanted to tell you something
+that comes straight from my heart.
+
+I am broke and I need some money, help a sister out. 😅
+I promise to pay you back with interest, but for now, I just want to say:   
+You're all I have.
+
+Thank you for being you.
+I love you. ❤️`;
+
+  const envelope = document.getElementById('envelope');
+  const letter   = document.getElementById('letter');
+  const hint     = document.getElementById('hint');
+  const textEl   = document.getElementById('text');
+  const resetBtn = document.getElementById('resetBtn');
+  const song     = document.getElementById('song');
+
+  let heartTimer = null;
+  let typeTimer  = null;
+
+  function spawnHeart() {
+    const h = document.createElement('div');
+    h.className = 'heart';
+    h.textContent = ['❤️','💖','💕','💗'][Math.floor(Math.random() * 4)];
+    h.style.left = Math.random() * 95 + 'vw';
+    document.body.appendChild(h);
+    setTimeout(() => h.remove(), 4000);
+  }
+
+  function typeWriter(i = 0) {
+    textEl.innerHTML = message.slice(0, i).replace(/\n/g, '<br>');
+    if (i < message.length) {
+      typeTimer = setTimeout(() => typeWriter(i + 1), 45);
+    } else {
+      resetBtn.style.display = 'block';   // show reset when done
+    }
+  }
+
+  function openLetter() {
+    envelope.style.display = 'none';
+    hint.style.display = 'none';
+    letter.style.display = 'block';
+    if (navigator.vibrate) navigator.vibrate(200);
+    song.play().catch(() => {});          // ignore if song.mp3 is missing
+    typeWriter();
+    heartTimer = setInterval(spawnHeart, 400);
+  }
+
+  function resetAll() {
+    clearTimeout(typeTimer);
+    clearInterval(heartTimer);
+    song.pause();
+    song.currentTime = 0;
+    textEl.innerHTML = '';
+    resetBtn.style.display = 'none';
+    letter.style.display = 'none';
+    envelope.style.display = 'block';
+    hint.style.display = 'block';
+  }
+
+  envelope.addEventListener('click', openLetter);
+  resetBtn.addEventListener('click', resetAll);
+</script>
+</body>
+</html>
