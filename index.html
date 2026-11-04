@@ -37,6 +37,8 @@
     display: none;
     width: 88%;
     max-width: 420px;
+    max-height: 92vh;
+    overflow-y: auto;
     background: #fffaf3;
     border-radius: 16px;
     padding: 28px 22px;
@@ -47,27 +49,36 @@
     text-align: left;
     animation: slideUp 0.8s ease;
   }
-  #letter img {
-    width: 100%;
-    border-radius: 12px;
-    margin-bottom: 16px;
-  }
+  #letter img { width: 100%; border-radius: 12px; margin-bottom: 16px; }
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(40px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  #resetBtn {
-    display: none;
-    margin: 18px auto 0;
-    padding: 8px 18px;
+  #questionBox { display: none; margin-top: 22px; text-align: center; }
+  #question { font-size: 2rem; color: #c2185b; margin-bottom: 14px; }
+  .btn {
     font-family: 'Caveat', cursive;
-    font-size: 1.4rem;
-    color: #fff;
-    background: #e91e63;
+    font-size: 1.6rem;
+    padding: 8px 24px;
     border: none;
     border-radius: 999px;
     cursor: pointer;
+    margin: 0 6px;
+  }
+  #yesBtn { background: #e91e63; color: #fff; }
+  #noBtn  { background: #ddd; color: #555; z-index: 10; }
+  #answer { font-size: 2rem; color: #c2185b; margin-top: 10px; }
+
+  #resetBtn {
+    display: none;
+    margin: 18px auto 0;
+    font-size: 1.3rem;
+    background: transparent;
+    color: #999;
+    border: none;
+    cursor: pointer;
+    font-family: 'Caveat', cursive;
   }
 
   .heart {
@@ -90,13 +101,23 @@
   <div id="letter">
     <img src="photo.jpg" alt="Us" onerror="this.style.display='none'">
     <p id="text"></p>
-    <button id="resetBtn">Read again 🔄</button>
+
+    <div id="questionBox">
+      <p id="question"></p>
+      <button class="btn" id="yesBtn">Accept 💖</button>
+      <button class="btn" id="noBtn">Decline</button>
+      <p id="answer"></p>
+    </div>
+
+    <div style="text-align:center">
+      <button id="resetBtn">Read again 🔄</button>
+    </div>
   </div>
 
   <audio id="song" src="song.mp3" loop></audio>
 
 <script>
-  // ✏️ WRITE YOUR LETTER HERE
+  // ✏️ SETTINGS: change these
   const message =
 `My Dear Abu k,
 
@@ -105,21 +126,34 @@ because I wanted to tell you something
 that comes straight from my heart.
 
 I am broke and I need some money, help a sister out. 😅
-I promise to pay you back with interest, but for now, I just want to say:   
+I promise to pay you back with interest, but for now, I just want to say:
 You're all I have.
 
 Thank you for being you.
 I love you. ❤️`;
 
-  const envelope = document.getElementById('envelope');
-  const letter   = document.getElementById('letter');
-  const hint     = document.getElementById('hint');
-  const textEl   = document.getElementById('text');
-  const resetBtn = document.getElementById('resetBtn');
-  const song     = document.getElementById('song');
+  const questionText = "So... do you accept or decline? 😅";
+  const yesReply     = "Thank you!! You're the best 🎉❤️";
+  const NTFY_TOPIC   = "change-me-to-something-random-8x42kq91";
+  const NOTIFY_TEXT  = "He accepted! 💸💖";
 
-  let heartTimer = null;
-  let typeTimer  = null;
+  // What the Decline button says each time he tries to touch it
+  const declineTexts = [
+    "Think again 🤔",
+    "Are you sure? 🥺",
+    "Last chance 💸",
+    "Don't do this to me 😭",
+    "I'll cry 😢",
+    "Just press Accept 😤"
+  ];
+
+  const $ = id => document.getElementById(id);
+  const envelope = $('envelope'), letter = $('letter'), hint = $('hint');
+  const textEl = $('text'), resetBtn = $('resetBtn'), song = $('song');
+  const questionBox = $('questionBox'), yesBtn = $('yesBtn'), noBtn = $('noBtn');
+  const answerEl = $('answer');
+
+  let heartTimer = null, typeTimer = null, dodgeCount = 0;
 
   function spawnHeart() {
     const h = document.createElement('div');
@@ -135,7 +169,10 @@ I love you. ❤️`;
     if (i < message.length) {
       typeTimer = setTimeout(() => typeWriter(i + 1), 45);
     } else {
-      resetBtn.style.display = 'block';   // show reset when done
+      $('question').textContent = questionText;
+      questionBox.style.display = 'block';
+      resetBtn.style.display = 'inline-block';
+      letter.scrollTop = letter.scrollHeight;
     }
   }
 
@@ -144,10 +181,34 @@ I love you. ❤️`;
     hint.style.display = 'none';
     letter.style.display = 'block';
     if (navigator.vibrate) navigator.vibrate(200);
-    song.play().catch(() => {});          // ignore if song.mp3 is missing
+    song.play().catch(() => {});
     typeWriter();
     heartTimer = setInterval(spawnHeart, 400);
   }
+
+  // Decline button runs away and changes its text
+  function dodge(e) {
+    if (e) e.preventDefault();
+    noBtn.textContent = declineTexts[Math.min(dodgeCount, declineTexts.length - 1)];
+    dodgeCount++;
+    noBtn.style.position = 'fixed';
+    noBtn.style.left = Math.random() * 60 + 10 + 'vw';
+    noBtn.style.top  = Math.random() * 70 + 10 + 'vh';
+  }
+  noBtn.addEventListener('touchstart', dodge);
+  noBtn.addEventListener('mouseover', dodge);
+  noBtn.addEventListener('click', dodge);
+
+  function sayYes() {
+    answerEl.textContent = yesReply;
+    yesBtn.style.display = 'none';
+    noBtn.style.display = 'none';
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    for (let i = 0; i < 25; i++) setTimeout(spawnHeart, i * 80);
+    fetch('https://ntfy.sh/' + NTFY_TOPIC, { method: 'POST', body: NOTIFY_TEXT })
+      .catch(() => {});
+  }
+  yesBtn.addEventListener('click', sayYes);
 
   function resetAll() {
     clearTimeout(typeTimer);
@@ -155,6 +216,15 @@ I love you. ❤️`;
     song.pause();
     song.currentTime = 0;
     textEl.innerHTML = '';
+    answerEl.textContent = '';
+    questionBox.style.display = 'none';
+    yesBtn.style.display = 'inline-block';
+    noBtn.style.display = 'inline-block';
+    noBtn.textContent = 'Decline';
+    noBtn.style.position = '';
+    noBtn.style.left = '';
+    noBtn.style.top = '';
+    dodgeCount = 0;
     resetBtn.style.display = 'none';
     letter.style.display = 'none';
     envelope.style.display = 'block';
